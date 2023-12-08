@@ -214,36 +214,35 @@ def monte_carlo(data,testsize=0.5,simulation=100,**kwargs):
     #train test split as usual
     df,test=train_test_split(data,test_size=testsize,shuffle=False,**kwargs)
     forecast_horizon=len(test)
-    
+
     #we only care about close price
     #if there has been dividend issued
     #we use adjusted close price instead
     df=df.loc[:,['Close']]
-        
+
     #here we use log return
     returnn=np.log(df['Close'].iloc[1:]/df['Close'].shift(1).iloc[1:])
     drift=returnn.mean()-returnn.var()/2
-    
+
     #we use dictionary to store predicted time series
     d={}
-    
+
     #we use geometric brownian motion to compute the next price
     # https://en.wikipedia.org/wiki/Geometric_Brownian_motion
     for counter in range(simulation):
         d[counter]=[df['Close'].iloc[0]]
-      
+
         #we dont just forecast the future
         #we need to compare the forecast with the historical data as well
         #thats why the data range is training horizon plus testing horizon
-        for i in range(len(df)+forecast_horizon-1):
-         
+        for _ in range(len(df)+forecast_horizon-1):
             #we use standard normal distribution to generate pseudo random number
             #which is sufficient for our monte carlo simulation
             sde=drift+returnn.std()*rd.gauss(0,1)
             temp=d[counter][-1]*np.exp(sde)
-        
+
             d[counter].append(temp.item())
-    
+
     #to determine which simulation is the best fit
     #we use simple criterias, the smallest standard deviation
     #we iterate through every simulation and compare it with actual data
@@ -251,13 +250,13 @@ def monte_carlo(data,testsize=0.5,simulation=100,**kwargs):
     std=float('inf')
     pick=0
     for counter in range(simulation):
-    
+
         temp=np.std(np.subtract(
                     d[counter][:len(df)],df['Close']))
         if temp<std:
             std=temp
             pick=counter
-    
+
     return forecast_horizon,d,pick
 
 
@@ -272,7 +271,7 @@ def plot(df,forecast_horizon,d,pick,ticker):
     ax=plt.figure(figsize=(10,5)).add_subplot(111)
     ax.spines['top'].set_visible(False)
     ax.spines['right'].set_visible(False)
-    for i in range(int(len(d))):
+    for i in range(len(d)):
         if i!=pick:
             ax.plot(df.index[:len(df)-forecast_horizon], \
                     d[i][:len(df)-forecast_horizon], \
@@ -286,7 +285,7 @@ def plot(df,forecast_horizon,d,pick,ticker):
     plt.ylabel('Price')
     plt.xlabel('Date')
     plt.show()
-    
+
     #the second figure plots both training and testing horizons
     #we compare the best fitted plus forecast with the actual history
     #the figure reveals why monte carlo simulation in trading is house of cards
@@ -336,23 +335,26 @@ def test(df,ticker,simu_start=100,simu_end=1000,simu_delta=100,**kwargs):
     #vice versa
     for i in np.arange(simu_start,simu_end+1,simu_delta):
         print(i)
-        
+
         forecast_horizon,d,pick=monte_carlo(df,simulation=i,**kwargs)
-        
+
         actual_return=np.sign( \
                               df['Close'].iloc[len(df)-forecast_horizon]-df['Close'].iloc[-1])
-        
+
         best_fitted_return=np.sign(d[pick][len(df)-forecast_horizon]-d[pick][-1])
         table.at[i,'Prediction']=np.where(actual_return==best_fitted_return,1,-1)
-        
+
     #we plot the horizontal bar chart 
     #to show the accuracy does not increase over the number of simulations
     ax=plt.figure(figsize=(10,5)).add_subplot(111)
     ax.spines['right'].set_position('center')
     ax.spines['top'].set_visible(False)
 
-    plt.barh(np.arange(1,len(table)*2+1,2),table['Prediction'], \
-             color=colorlist[0::int(len(colorlist)/len(table))])
+    plt.barh(
+        np.arange(1, len(table) * 2 + 1, 2),
+        table['Prediction'],
+        color=colorlist[0 :: len(colorlist) // len(table)],
+    )
 
     plt.xticks([-1,1],['Failure','Success'])
     plt.yticks(np.arange(1,len(table)*2+1,2),table.index)

@@ -67,33 +67,30 @@ def EG_method(X,Y,show_summary=False):
     #estimate long run equilibrium
     model1=sm.OLS(Y,sm.add_constant(X)).fit()
     epsilon=model1.resid
-    
+
     if show_summary:
         print('\nStep 1\n')
         print(model1.summary())
-    
+
     #check p value of augmented dickey fuller test
     #if p value is no larger than 5%, stationary test is passed
     if sm.tsa.stattools.adfuller(epsilon)[1]>0.05:
         return False,model1
-    
+
     #take first order difference of X and Y plus the lagged residual from step 1
     X_dif=sm.add_constant(pd.concat([X.diff(),epsilon.shift(1)],axis=1).dropna())
     Y_dif=Y.diff().dropna()        
-    
+
     #step 2
     #estimate error correction model
     model2=sm.OLS(Y_dif,X_dif).fit()
-    
+
     if show_summary:
         print('\nStep 2\n')
         print(model2.summary())
-    
+
     #adjustment coefficient must be negative
-    if list(model2.params)[-1]>0:
-        return False,model1
-    else:
-        return True,model1
+    return (False, model1) if list(model2.params)[-1]>0 else (True, model1)
 
 
 # In[4]:

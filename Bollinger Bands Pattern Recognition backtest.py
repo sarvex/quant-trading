@@ -70,7 +70,7 @@ def signal_generation(data,method):
     #for a double bottom pattern
     #we should use 3-month horizon which is 75
     period=75
-    
+
     #alpha denotes the difference between price and bollinger bands
     #if alpha is too small, its unlikely to trigger a signal
     #if alpha is too large, its too easy to trigger a signal
@@ -80,16 +80,16 @@ def signal_generation(data,method):
     #when bandwidth is smaller than beta, it is contraction period
     alpha=0.0001
     beta=0.0001
-    
+
     df=method(data)
     df['signals']=0
-    
+
     #as usual, cumsum denotes the holding position
     #coordinates store five nodes of w shape
     #later we would use these coordinates to draw a w shape
     df['cumsum']=0
     df['coordinates']=''
-    
+
     for i in range(period,len(df)):
         
         #moveon is a process control
@@ -100,7 +100,7 @@ def signal_generation(data,method):
         #plz refer to condition 3
         moveon=False
         threshold=0.0
-        
+
         #bottom w pattern recognition
         #there is another signal generation method called walking the bands
         #i personally think its too late for following the trend
@@ -111,34 +111,34 @@ def signal_generation(data,method):
         (df['cumsum'][i]==0):
             
             for j in range(i,i-period,-1):                
-                
+
                 #condition 2
                 if (np.abs(df['mid band'][j]-df['price'][j])<alpha) and \
                 (np.abs(df['mid band'][j]-df['upper band'][i])<alpha):
                     moveon=True
                     break
-            
+
             if moveon==True:
                 moveon=False
                 for k in range(j,i-period,-1):
-                    
+
                     #condition 1
                     if (np.abs(df['lower band'][k]-df['price'][k])<alpha):
                         threshold=df['price'][k]
                         moveon=True
                         break
-                        
+
             if moveon==True:
                 moveon=False
                 for l in range(k,i-period,-1):
-                    
+
                     #this one is for plotting w shape
                     if (df['mid band'][l]<df['price'][l]):
                         moveon=True
                         break
-                    
+
             if moveon==True:
-                moveon=False        
+                moveon=False
                 for m in range(i,j,-1):
                     
                     #condition 3
@@ -146,17 +146,17 @@ def signal_generation(data,method):
                     (df['price'][m]>df['lower band'][m]) and \
                     (df['price'][m]<threshold):
                         df.at[i,'signals']=1
-                        df.at[i,'coordinates']='%s,%s,%s,%s,%s'%(l,k,j,m,i)
+                        df.at[i,'coordinates'] = f'{l},{k},{j},{m},{i}'
                         df['cumsum']=df['signals'].cumsum()
                         moveon=True
                         break
-        
+
         #clear our positions when there is contraction on bollinger bands
         #contraction on the bandwidth is easy to understand
         #when price momentum exists, the price would move dramatically for either direction
         #which greatly increases the standard deviation
         #when the momentum vanishes, we clear our positions
-        
+
         #note that we put moveon in the condition
         #just in case our signal generation time is contraction period
         #but we dont wanna clear positions right now
@@ -165,7 +165,7 @@ def signal_generation(data,method):
         (moveon==False):
             df.at[i,'signals']=-1
             df['cumsum']=df['signals'].cumsum()
-            
+
     return df
 
 

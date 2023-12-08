@@ -230,7 +230,7 @@ def compute_sigma(forward,strike,
         for j in i.index:
             
             #interval between strike prices
-            if j-1<0:
+            if j < 1:
                 delta=abs(i['options-strikePrice'][j]-i['options-strikePrice'][j+1])
             elif j+1==len(i):
                 delta=abs(i['options-strikePrice'][j]-i['options-strikePrice'][j-1])
@@ -239,10 +239,10 @@ def compute_sigma(forward,strike,
 
             contributions+=i['options-priorSettle'][j]*np.exp(interest_rate*time_to_expiration)*delta/(i['options-strikePrice'][j])**2
 
-    #replace bid ask spread midpoint with prior settle
-    sigma=contributions*2/time_to_expiration-((forward/strike-1)**2)/time_to_expiration
-    
-    return sigma
+    return (
+        contributions * 2 / time_to_expiration
+        - ((forward / strike - 1) ** 2) / time_to_expiration
+    )
 
 
 # In[9]:
@@ -257,9 +257,7 @@ def compute_vix(time_to_expiration_front,
 
     sum1=time_to_expiration_front*sigma_front*(time_to_expiration_rear*num_of_mins_year-num_of_mins_timeframe)/(time_to_expiration_rear*num_of_mins_year-time_to_expiration_front*num_of_mins_year)
     sum2=time_to_expiration_rear*sigma_rear*(num_of_mins_timeframe-time_to_expiration_front*num_of_mins_year)/(time_to_expiration_rear*num_of_mins_year-time_to_expiration_front*num_of_mins_year)
-    vix=((sum1+sum2)*num_of_mins_year/num_of_mins_timeframe)**0.5*100
-    
-    return vix
+    return ((sum1+sum2)*num_of_mins_year/num_of_mins_timeframe)**0.5*100
 
 
 # In[10]:
@@ -274,7 +272,7 @@ def vix_calculator(df,cmt_rate,calendar,
     
     #us federal holidays
     federal_holidays=calendar['DATE'].tolist()
-    
+
     #daily treasury yield curve rate
     interest_rate_front=cmt_rate['value'][cmt_rate['maturity']==f'{timeframe_front} Mo'][cmt_rate['Date']==tradedate].item()/100
     interest_rate_rear=cmt_rate['value'][cmt_rate['maturity']==f'{timeframe_rear} Mo'][cmt_rate['Date']==tradedate].item()/100
@@ -357,14 +355,14 @@ def vix_calculator(df,cmt_rate,calendar,
                       options_put_rear_inclusion,
                       interest_rate_rear,time_to_expiration_rear)
 
-    #enfin,vix!!!
-    vix=compute_vix(time_to_expiration_front,
-                    time_to_expiration_rear,
-                    sigma_front,sigma_rear,
-                    num_of_mins_timeframe,
-                    num_of_mins_year)
-    
-    return vix
+    return compute_vix(
+        time_to_expiration_front,
+        time_to_expiration_rear,
+        sigma_front,
+        sigma_rear,
+        num_of_mins_timeframe,
+        num_of_mins_year,
+    )
 
 
 # In[11]:

@@ -50,11 +50,14 @@ m.scatter(x,y, s=size, linewidths=2, edgecolors="#6c6b74",
           alpha=0.8,c=df['iron ore production'],cmap='autumn_r')
 
 for i in range(len(x)):
-    plt.text(x[i],y[i],               
-             '%s '%(df['region'][i]),              
-             horizontalalignment='center', 
-            verticalalignment='center', 
-             size=25)
+    plt.text(
+        x[i],
+        y[i],
+        f"{df['region'][i]} ",
+        horizontalalignment='center',
+        verticalalignment='center',
+        size=25,
+    )
 
 cb=plt.colorbar(ticks=[10000,800000])
 cb.ax.set_yticklabels(cb.ax.get_yticklabels(), fontsize=20)

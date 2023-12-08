@@ -112,7 +112,7 @@ for i in df.columns:
             y=df['cad']
             m=sm.OLS(y,x).fit()
             var[str(i)]=m.rsquared
-     
+
 ax=plt.figure(figsize=(10,5)).add_subplot(111)
 ax.spines['top'].set_visible(False)
 ax.spines['right'].set_visible(False)
@@ -128,7 +128,7 @@ for i in temp:
         plt.bar(temp.index(i)+width,            
             var[str(i)],width=width,label=i,
                color=colorlist[temp.index(i)])
- 
+
 plt.title('Regressions on Loonie')
 plt.ylabel('R Squared\n')
 plt.xlabel('\nRegressors')
@@ -205,7 +205,7 @@ dual_axis_plot(df.index,
 
 #using elbow method to find optimal number of clusters
 
-df['date']=[i for i in range(len(df.index))]
+df['date'] = list(range(len(df.index)))
 
 x=df[['cad','wcs','date']].reset_index(drop=True)
 
@@ -217,29 +217,26 @@ for i in range(1, 8):
 
 a,b=get_line_params(0,sse[0],len(sse)-1,sse[-1])
 
-distance=[]
-for i in range(len(sse)):    
-    distance.append(get_distance(i,sse[i],a,b))
-
+distance = [get_distance(i,sse[i],a,b) for i in range(len(sse))]
 dual_axis_plot(np.arange(1,len(distance)+1),sse,distance,
                x_label='Numbers of Cluster',y_label1='Sum of Squared Error',
                y_label2='Perpendicular Distance',legend1='SSE',legend2='Distance',
                title='Elbow Method for K Means',fst_color='#116466',sec_color='#e85a4f')
-  
-  
-  
+
+
+
 # In[11]:
 
 #using silhouette score to find optimal number of clusters
 
 sil=[]
 for n in range(2,8):
-    
+
     clf=KMeans(n).fit(x)
     projection=clf.predict(x)
-        
+
     sil.append(silhouette_score(x,projection))
-    
+
 ax=plt.figure(figsize=(10,5)).add_subplot(111)
 ax.spines['top'].set_visible(False)
 ax.spines['right'].set_visible(False)
@@ -277,16 +274,28 @@ ax=plt.figure(figsize=(10,7)).add_subplot(111, projection='3d')
 xdata=df['wcs']
 ydata=df['cad']
 zdata=df['date']
-ax.scatter3D(xdata[df['class']==0],ydata[df['class']==0],
-             zdata[df['class']==0],c='#faed26',s=10,alpha=0.5,
-             label='Before {}'.format(threshold.strftime('%Y-%m-%d')))
-ax.scatter3D(xdata[df['class']==1],ydata[df['class']==1],
-             zdata[df['class']==1],c='#46344e',s=10,alpha=0.5,
-             label='After {}'.format(threshold.strftime('%Y-%m-%d')))
+ax.scatter3D(
+    xdata[df['class'] == 0],
+    ydata[df['class'] == 0],
+    zdata[df['class'] == 0],
+    c='#faed26',
+    s=10,
+    alpha=0.5,
+    label=f"Before {threshold.strftime('%Y-%m-%d')}",
+)
+ax.scatter3D(
+    xdata[df['class'] == 1],
+    ydata[df['class'] == 1],
+    zdata[df['class'] == 1],
+    c='#46344e',
+    s=10,
+    alpha=0.5,
+    label=f"After {threshold.strftime('%Y-%m-%d')}",
+)
 ax.grid(False)
 for i in ax.w_xaxis, ax.w_yaxis, ax.w_zaxis:
     i.pane.set_visible(False)  
-    
+
 ax.set_xlabel('WCS')
 ax.set_ylabel('Loonie')
 ax.set_zlabel('Date')
@@ -326,9 +335,14 @@ after=m.rsquared
 ax=plt.figure(figsize=(10,5)).add_subplot(111)
 ax.spines['top'].set_visible(False)
 ax.spines['right'].set_visible(False)
-plt.bar(['Before {}'.format(threshold.strftime('%Y-%m-%d')),
-         'After {}'.format(threshold.strftime('%Y-%m-%d'))],
-        [before,after],color=['#f172a1','#a1c3d1'])
+plt.bar(
+    [
+        f"Before {threshold.strftime('%Y-%m-%d')}",
+        f"After {threshold.strftime('%Y-%m-%d')}",
+    ],
+    [before, after],
+    color=['#f172a1', '#a1c3d1'],
+)
 plt.ylabel('R Squared')
 plt.title('Cluster + Regression')
 plt.show()
@@ -340,15 +354,15 @@ plt.show()
 #create 1 std, 2 std band
 
 for i in range(2):
-    
+
     x_train,x_test,y_train,y_test=train_test_split(
         sm.add_constant(df['wcs'][df['class']==i]),
         df['cad'][df['class']==i],test_size=0.5,shuffle=False)
-    
+
     m=sm.OLS(y_test,x_test).fit()
-    
+
     forecast=m.predict(x_test)
-    
+
     ax=plt.figure(figsize=(10,5)).add_subplot(111)
     ax.spines['top'].set_visible(False)
     ax.spines['right'].set_visible(False)
@@ -360,14 +374,14 @@ for i in range(2):
                     color='#0f1626', \
                     alpha=0.6, \
                     label='1 Sigma')
-    
+
     ax.fill_between(y_test.index,
                     forecast+2*np.std(m.resid),
                     forecast-2*np.std(m.resid),
                     color='#0f1626', \
                     alpha=0.8, \
                     label='2 Sigma')
-    
+
     plt.legend(loc=0)
     title='Before '+threshold.strftime('%Y-%m-%d') if i==0 else 'After '+threshold.strftime('%Y-%m-%d')
     plt.title(f'{title}\nCanadian Dollar Positions\nR Squared {round(m.rsquared*100,2)}%\n')
