@@ -45,7 +45,7 @@ def min2day(df,column,year,month,rg):
     #lets create a dictionary 
     #we use keys to classify different info we need
     memo={'date':[],'open':[],'close':[],'high':[],'low':[]}
-    
+
     #no matter which month
     #the maximum we can get is 31 days
     #thus, we only need to run a traversal on 31 days
@@ -61,29 +61,29 @@ def min2day(df,column,year,month,rg):
     #we wanna make sure the length of all lists in dictionary are the same
     #so that we can construct a structured table in the next step
     for i in range(1,32):
-    
+
         try:
-            temp=df['%s-%s-%s 3:00:00'%(year,month,i):'%s-%s-%s 12:00:00'%(year,month,i)][column]
+            temp = df[f'{year}-{month}-{i} 3:00:00':f'{year}-{month}-{i} 12:00:00'][column]
 
             memo['open'].append(temp[0])
             memo['close'].append(temp[-1])
             memo['high'].append(max(temp))
             memo['low'].append(min(temp))
-            memo['date'].append('%s-%s-%s'%(year,month,i))
-       
+            memo['date'].append(f'{year}-{month}-{i}')
+                   
 
         except Exception:
             pass
-        
+
     intraday=pd.DataFrame(memo)
     intraday.set_index(pd.to_datetime(intraday['date']),inplace=True)
-    
-    
+
+
     #preparation
     intraday['range1']=intraday['high'].rolling(rg).max()-intraday['close'].rolling(rg).min()
     intraday['range2']=intraday['close'].rolling(rg).max()-intraday['low'].rolling(rg).min()
     intraday['range']=np.where(intraday['range1']>intraday['range2'],intraday['range1'],intraday['range2'])
-    
+
     return intraday
 
 
@@ -105,7 +105,7 @@ def signal_generation(df,intraday,param,column,rg):
     signals['lower']=0.0
     sigup=float(0)
     siglo=float(0)
-    
+
     #for traversal on time series
     #the tricky part is the slicing
     #we have to either use [i:i] or pd.Series
@@ -113,18 +113,18 @@ def signal_generation(df,intraday,param,column,rg):
     #which is est 3am
     #if the price exceeds either threshold
     #we will take long/short positions  
-    
+
     for i in signals.index:
-        
-        #note that intraday and dataframe have different frequencies
-        #obviously different metrics for indexes
-        #we use variable date for index convertion
-        date='%s-%s-%s'%(i.year,i.month,i.day)
-        
         
         #market opening
         #set up thresholds
         if (i.hour==3 and i.minute==0):
+                    #note that intraday and dataframe have different frequencies
+                    #obviously different metrics for indexes
+                    #we use variable date for index convertion
+            date = f'{i.year}-{i.month}-{i.day}'
+                    
+
             sigup=float(param*intraday['range'][date]+pd.Series(signals[column])[i])
             siglo=float(-(1-param)*intraday['range'][date]+pd.Series(signals[column])[i])
 
@@ -142,7 +142,7 @@ def signal_generation(df,intraday,param,column,rg):
             signals['cumsum']=signals['signals'].cumsum()        
             if (pd.Series(signals['cumsum'])[i]>1 or pd.Series(signals['cumsum'])[i]<-1):
                 signals.at[i,'signals']=0
-               
+
             #if the price goes from below the lower threshold to above the upper threshold during the day
             #we reverse our positions from short to long
             if (pd.Series(signals['cumsum'])[i]==0):
@@ -150,7 +150,7 @@ def signal_generation(df,intraday,param,column,rg):
                     signals.at[i,'signals']=2
                 if (pd.Series(signals[column])[i]<siglo):
                     signals.at[i,'signals']=-2
-                    
+
         #by the end of london market, which is est 12pm
         #we clear all opening positions
         #the whole part is very similar to London Breakout strategy
@@ -158,7 +158,7 @@ def signal_generation(df,intraday,param,column,rg):
             sigup,siglo=float(0),float(0)
             signals['cumsum']=signals['signals'].cumsum()
             signals.at[i,'signals']=-signals['cumsum'][i:i]
-            
+
         #keep track of trigger levels
         signals.at[i,'upper']=sigup
         signals.at[i,'lower']=siglo
@@ -171,12 +171,14 @@ def plot(signals,intraday,column):
     #we have to do a lil bit slicing to make sure we can see the plot clearly
     #the only reason i go to -3 is that day we execute a trade    
     #give one hour before and after market trading hour for as x axis  
-    date=pd.to_datetime(intraday['date']).iloc[-3]      
-    signew=signals['%s-%s-%s 02:00:00'%(date.year,date.month,date.day):'%s-%s-%s 13:00:00'%(date.year,date.month,date.day)]
-    
+    date=pd.to_datetime(intraday['date']).iloc[-3]
+    signew = signals[
+        f'{date.year}-{date.month}-{date.day} 02:00:00':f'{date.year}-{date.month}-{date.day} 13:00:00'
+    ]
+
     fig=plt.figure(figsize=(10,5))
     ax=fig.add_subplot(111)    
-    
+
     #mostly the same as other py files
     #the only difference is to create an interval for signal generation
     ax.plot(signew.index,signew[column],label=column)
@@ -190,9 +192,19 @@ def plot(signals,intraday,column):
         text.set_color('#6C5B7B')
 
     #add some captions
-    plt.text('%s-%s-%s 03:00:00'%(date.year,date.month,date.day),signew['upper']['%s-%s-%s 03:00:00'%(date.year,date.month,date.day)],'Upper Bound',color='#C06C84')
-    plt.text('%s-%s-%s 03:00:00'%(date.year,date.month,date.day),signew['lower']['%s-%s-%s 03:00:00'%(date.year,date.month,date.day)],'Lower Bound',color='#C06C84')
-    
+    plt.text(
+        f'{date.year}-{date.month}-{date.day} 03:00:00',
+        signew['upper'][f'{date.year}-{date.month}-{date.day} 03:00:00'],
+        'Upper Bound',
+        color='#C06C84',
+    )
+    plt.text(
+        f'{date.year}-{date.month}-{date.day} 03:00:00',
+        signew['lower'][f'{date.year}-{date.month}-{date.day} 03:00:00'],
+        'Lower Bound',
+        color='#C06C84',
+    )
+
     plt.ylabel(column)
     plt.xlabel('Date')
     plt.title('Dual Thrust')

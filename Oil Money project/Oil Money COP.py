@@ -68,7 +68,7 @@ for i in df.columns:
             y=df['cop']
             m=sm.OLS(y,x).fit()
             D[i]=m.rsquared
-            
+
 D=dict(sorted(D.items(),key=lambda x:x[1],reverse=True))
 
 
@@ -79,31 +79,34 @@ D=dict(sorted(D.items(),key=lambda x:x[1],reverse=True))
 colorlist=[]
 
 for i in D:
-    if i =='wti':
-        colorlist.append('#447294')
-    elif i=='brent':
+    if i == 'brent':
         colorlist.append('#8fbcdb')
-    elif i=='vasconia':
+    elif i == 'vasconia':
         colorlist.append('#f4d6bc')
+    elif i == 'wti':
+        colorlist.append('#447294')
     else:
         colorlist.append('#cdc8c8')
-        
+
 ax=plt.figure(figsize=(10,5)).add_subplot(111)
 ax.spines['top'].set_visible(False)
 ax.spines['right'].set_visible(False)
 
 width=0.7
 
-for i in D:
-    plt.bar(list(D.keys()).index(i)+width,            
-            D[i],width=width,label=i,
-            color=colorlist[list(D.keys()).index(i)])
- 
+for i, value in D.items():
+    plt.bar(
+        list(D.keys()).index(i) + width,
+        value,
+        width=width,
+        label=i,
+        color=colorlist[list(D.keys()).index(i)],
+    )
+
 plt.title('Regressions on COP')
 plt.ylabel('R Squared\n')
 plt.xlabel('\nRegressors')
-plt.xticks(np.arange(len(D))+width,
-           [i.upper() for i in D.keys()],fontsize=8)
+plt.xticks(np.arange(len(D))+width, [i.upper() for i in D], fontsize=8)
 plt.show()
 
 
@@ -216,11 +219,11 @@ plt.show()
 x_train,x_test,y_train,y_test=train_test_split(
         sm.add_constant(df['vasconia'][:'2016']),
         df['cop'][:'2016'],test_size=0.5,shuffle=False)
-    
+
 m=sm.OLS(y_test,x_test).fit()
-    
+
 forecast=m.predict(x_test)
-    
+
 ax=plt.figure(figsize=(10,5)).add_subplot(111)
 ax.spines['top'].set_visible(False)
 ax.spines['right'].set_visible(False)
@@ -232,14 +235,14 @@ ax.fill_between(y_test.index,
                     color='#F4A688', 
                     alpha=0.6, 
                     label='1 Sigma')
-    
+
 ax.fill_between(y_test.index,
                     forecast+2*np.std(m.resid),
                     forecast-2*np.std(m.resid),
                     color='#8c7544', 
                     alpha=0.8, 
                     label='2 Sigma')
-    
+
 plt.legend(loc=0)
 plt.title(f'Colombian Peso Positions\nR Squared {round(m.rsquared*100,2)}%\n')
 plt.xlabel('\nDate')
@@ -254,11 +257,11 @@ plt.show()
 x_train,x_test,y_train,y_test=train_test_split(
         sm.add_constant(df['vasconia']['2017':]),
         df['cop']['2017':],test_size=0.5,shuffle=False)
-    
+
 m=sm.OLS(y_test,x_test).fit()
-    
+
 forecast=m.predict(x_test)
-    
+
 ax=plt.figure(figsize=(10,5)).add_subplot(111)
 ax.spines['top'].set_visible(False)
 ax.spines['right'].set_visible(False)
@@ -270,14 +273,14 @@ ax.fill_between(y_test.index,
                     color='#F4A688', 
                     alpha=0.6, 
                     label='1 Sigma')
-    
+
 ax.fill_between(y_test.index,
                     forecast+2*np.std(m.resid),
                     forecast-2*np.std(m.resid),
                     color='#8c7544', \
                     alpha=0.8, \
                     label='2 Sigma')
-    
+
 plt.legend(loc=0)
 plt.title(f'Colombian Peso Positions\nR Squared {round(m.rsquared*100,2)}%\n')
 plt.xlabel('\nDate')
@@ -317,10 +320,10 @@ for holdingt in range(5,20):
         signals=om.signal_generation(dataset,'vasconia','cop',om.oil_money,
                                      holding_threshold=holdingt,
                                      stop=round(stopp,4))
-        
+
         p=om.portfolio(signals,'cop')
         dic[holdingt,round(stopp,4)]=p['asset'].iloc[-1]/p['asset'].iloc[0]-1
-     
+
 profile=pd.DataFrame({'params':list(dic.keys()),'return':list(dic.values())})
 
 
@@ -331,9 +334,9 @@ profile=pd.DataFrame({'params':list(dic.keys()),'return':list(dic.values())})
 ax=plt.figure(figsize=(10,5)).add_subplot(111)
 ax.spines['top'].set_visible(False)
 ax.spines['right'].set_visible(False)
-profile['return'].apply(lambda x:x*100).hist(histtype='bar',
-                                             color='#b2660e',
-                                             width=0.45,bins=20)
+(profile['return'] * 100).hist(
+    histtype='bar', color='#b2660e', width=0.45, bins=20
+)
 plt.title('Distribution of Return on COP Trading')
 plt.grid(False)
 plt.ylabel('Frequency')

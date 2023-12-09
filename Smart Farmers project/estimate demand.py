@@ -27,11 +27,11 @@ def create_xy(target_crop,grande,malay_gdp,malay_pop):
                        grande['production'][target_crop]],axis=1)
 
     x=sm.add_constant(x)
-    
+
     #set production negative
-    x[target_crop.lower()]=x[target_crop].apply(lambda x:-1*x)
+    x[target_crop.lower()] = -1 * x[target_crop]
     del x[target_crop]
-    
+
     return x,y
 
 
@@ -84,17 +84,19 @@ def constrained_ols(x,y):
     #diagonal matrix
     #use -1 to achieve larger than
     inequality_coeff[::len(x.columns)+1]=-1
-    
+
     #no constraint for the constant
     inequality_coeff[0,0]=0
     inequality_value=cvxopt.matrix([0.0 for _ in range(len(x.columns))])
 
     cvxopt.solvers.options['show_progress']=False
 
-    ans=cvxopt.solvers.qp(P=quadratic_coeff,q=linear_coeff,
-                          G=inequality_coeff,h=inequality_value)['x']
-    
-    return ans
+    return cvxopt.solvers.qp(
+        P=quadratic_coeff,
+        q=linear_coeff,
+        G=inequality_coeff,
+        h=inequality_value,
+    )['x']
 
 
 # In[5]:
@@ -274,7 +276,9 @@ palm_futures.index=pd.to_datetime(palm_futures.index)
 
 
 #concat, currency convert and get annual avg
-temp=palm['Palm oil'][str(beginyear):].apply(lambda x:x*0.23).append(palm_futures['Palm oil'][:str(endyear+5)])
+temp = (palm['Palm oil'][str(beginyear) :] * 0.23).append(
+    palm_futures['Palm oil'][: str(endyear + 5)]
+)
 
 palmoil=temp.resample('1A').mean()
 

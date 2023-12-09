@@ -23,7 +23,7 @@ df=pd.read_csv('oil production choropleth.csv')
 # In[3]:
 
 
-df['Oil Production']=df['Oil Production'].apply(lambda x: x/1000)
+df['Oil Production'] = df['Oil Production'] / 1000
 
 
 # In[4]:

@@ -282,9 +282,7 @@ def omega(risk_free,degree_of_freedom,maximum,minimum):
     y=scipy.integrate.quad(lambda g:1-scipy.stats.t.cdf(g,degree_of_freedom),risk_free,maximum)
     x=scipy.integrate.quad(lambda g:scipy.stats.t.cdf(g,degree_of_freedom),minimum,risk_free)
 
-    z=(y[0])/(x[0])
-
-    return z
+    return (y[0])/(x[0])
 
 
 #sortino ratio is another variation of sharpe ratio
@@ -296,9 +294,7 @@ def omega(risk_free,degree_of_freedom,maximum,minimum):
 def sortino(risk_free,degree_of_freedom,growth_rate,minimum):
 
     v=np.sqrt(np.abs(scipy.integrate.quad(lambda g:((risk_free-g)**2)*scipy.stats.t.pdf(g,degree_of_freedom),risk_free,minimum)))
-    s=(growth_rate-risk_free)/v[0]
-
-    return s
+    return (growth_rate-risk_free)/v[0]
 
 
 #i use a function to calculate maximum drawdown
@@ -316,9 +312,7 @@ def mdd(series):
 
     minimum=0
     for i in range(1,len(series)):
-        if minimum>(series[i]/max(series[:i])-1):
-            minimum=(series[i]/max(series[:i])-1)
-
+        minimum = min(minimum, series[i]/max(series[:i])-1)
     return minimum
 
 

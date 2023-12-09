@@ -222,11 +222,11 @@ def plot(new):
 
     ax.plot(new.loc[new['signals']==1].index,new['price'][new['signals']==1],lw=0,marker='^',c='g',label='LONG')
     ax.plot(new.loc[new['signals']==-1].index,new['price'][new['signals']==-1],lw=0,marker='v',c='r',label='SHORT')
-      
+
     #this is the part where i add some vertical line to indicate market beginning and ending
     date=new.index[0].strftime('%Y-%m-%d')
-    plt.axvline('%s 03:00:00'%(date),linestyle=':',c='k')
-    plt.axvline('%s 12:00:00'%(date),linestyle=':',c='k')
+    plt.axvline(f'{date} 03:00:00', linestyle=':', c='k')
+    plt.axvline(f'{date} 12:00:00', linestyle=':', c='k')
 
 
     plt.legend(loc='best')
@@ -240,8 +240,8 @@ def plot(new):
     #lets look at the market opening and break it down into 110 minutes
     #we wanna observe how the price goes beyond the threshold
 
-    f='%s 02:50:00'%(date)
-    l='%s 03:30:00'%(date)
+    f = f'{date} 02:50:00'
+    l = f'{date} 03:30:00'
     news=signals[f:l]
     fig=plt.figure()
     bx=fig.add_subplot(111)
@@ -260,7 +260,7 @@ def plot(new):
     plt.ylabel('price')
     plt.xlabel('time interval')
     plt.xticks([])
-    plt.title('%s Market Opening'%date)
+    plt.title(f'{date} Market Opening')
     plt.legend(loc='best')
     plt.show()
     
@@ -273,9 +273,9 @@ def main():
     signals=signal_generation(df,london_breakout)
 
     new=signals
-    new.set_index(pd.to_datetime(signals['date']),inplace=True)
+    new.set_index(pd.to_datetime(new['date']), inplace=True)
     date=new.index[0].strftime('%Y-%m-%d')
-    new=new['%s'%date]
+    new = new[f'{date}']
 
     plot(new)
 

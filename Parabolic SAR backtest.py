@@ -113,12 +113,12 @@ def plot(new,ticker):
     
     fig=plt.figure()
     ax=fig.add_subplot(111)
-    
-    new['Close'].plot(lw=3,label='%s'%ticker)
+
+    new['Close'].plot(lw=3, label=f'{ticker}')
     new['real sar'].plot(linestyle=':',label='Parabolic SAR',color='k')
     ax.plot(new.loc[new['signals']==1].index,new['Close'][new['signals']==1],marker='^',color='g',label='LONG',lw=0,markersize=10)
     ax.plot(new.loc[new['signals']==-1].index,new['Close'][new['signals']==-1],marker='v',color='r',label='SHORT',lw=0,markersize=10)
-    
+
     plt.legend()
     plt.grid(True)
     plt.title('Parabolic SAR')

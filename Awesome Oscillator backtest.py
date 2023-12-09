@@ -269,9 +269,7 @@ def mdd(series):
 
     temp=0
     for i in range(1,len(series)):
-        if temp>(series[i]/max(series[:i])-1):
-            temp=(series[i]/max(series[:i])-1)
-
+        temp = min(temp, series[i]/max(series[:i])-1)
     return temp
 
 

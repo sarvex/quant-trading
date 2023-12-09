@@ -83,13 +83,7 @@ import re
 def find_strike_price(df):
     
     temp=[re.search('\d{4}',i).group() for i in df.columns]
-    target=[]
-
-    for i in set(temp):
-        if temp.count(i)>1:
-            target.append(i)
-            
-    return target
+    return [i for i in set(temp) if temp.count(i)>1]
 
 
 
